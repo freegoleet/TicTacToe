@@ -2,6 +2,7 @@
 //
 
 #include <iostream>
+#include <time.h>
 
 #define HUMAN 1 
 #define COMPUTER 2 
@@ -137,7 +138,6 @@ Move findBestMove(char board[SIDE][SIDE]) {
             }
         }
     }
-    std::printf("\nThe position of the best Move is: Row %d Col %d\n\n", bestMove.row, bestMove.col);
 
     board[bestMove.row][bestMove.col] = COMPUTERMOVE;
     turn = HUMAN;
@@ -149,6 +149,7 @@ Move getHumanMove(char board[SIDE][SIDE]) {
     
     Move humanMove;
     std::cout << std::endl;
+    std::cout << "Your input: ";
     std::cin >> choice;
 
     switch (choice) {
@@ -186,6 +187,7 @@ void drawBoard(char board[SIDE][SIDE]) {
         if (row != 2)
             std::cout << "\n---|---|---\n";
     }
+    std::cout << "\n\n_____________\n\n";
 }
 
 int main() {
@@ -197,13 +199,14 @@ int main() {
 
     int done;
 
-
     printf("Human vs. Tic Tac Toe minimax\n");
     printf("You will be player against the computer as 'O'\n");
+    printf("Controls are: \n 1 - 2 - 3 \n 4 - 5 - 6 \n 7 - 8 - 9 \n");
 
     done = 0;
 
     drawBoard(board);
+    std::cout << std::endl;
 
     do {
 
@@ -215,7 +218,7 @@ int main() {
         done = evaluate(board);
         drawBoard(board);
 
-        if (!bMovesLeft) {
+        if (bMovesLeft(board) == false) {
             printf("\n draw \n");
             break;
         }
@@ -226,8 +229,8 @@ int main() {
 
     if (done == 10)
         printf("\nComputer won!\n");
-    else
-        printf("\nHuman won!\n");
+    else if (done == -10)
+        printf("\You won!\n");
 
     return 0;
 }
