@@ -1,6 +1,3 @@
-// TicTacToe.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include <time.h>
 
@@ -9,8 +6,8 @@
 
 #define SIDE 3
 
-#define COMPUTERMOVE 'X' 
-#define HUMANMOVE 'O' 
+#define MAXMOVE 'X' 
+#define MINMOVE 'O' 
 #define EMPTY '_'
 
 struct Move 
@@ -18,7 +15,10 @@ struct Move
     int row, col;
 };  
 
-int turn = COMPUTER;
+int turn;
+int COMPUTERMOVE;
+int HUMANMOVE;
+
 
 int choice;
 
@@ -34,33 +34,33 @@ bool bMovesLeft(char board[SIDE][SIDE]) {
 int evaluate(char b[SIDE][SIDE]) {
     for (int row = 0; row < SIDE; row++) {
         if (b[row][0] == b[row][1] && b[row][1] == b[row][2]) {
-            if (b[row][0] == COMPUTERMOVE)
+            if (b[row][0] == MAXMOVE)
                 return +10;
-            if (b[row][0] == HUMANMOVE)
+            if (b[row][0] == MINMOVE)
                 return -10;
         }
     }
 
     for (int col = 0; col < SIDE; col++) {
         if (b[0][col] == b[1][col] && b[1][col] == b[2][col]) {
-            if (b[0][col] == COMPUTERMOVE)
+            if (b[0][col] == MAXMOVE)
                 return +10;
-            if (b[0][col] == HUMANMOVE)
+            if (b[0][col] == MINMOVE)
                 return -10;
         }
     }
 
     if (b[0][0] == b[1][1] && b[1][1] == b[2][2]) {
-        if (b[0][0] == COMPUTERMOVE)
+        if (b[0][0] == MAXMOVE)
             return +10;
-        if (b[0][0] == HUMANMOVE)
+        if (b[0][0] == MINMOVE)
             return -10;
     }
 
     if (b[0][2] == b[1][1] && b[1][1] == b[2][0]) {
-        if (b[0][2] == COMPUTERMOVE)
+        if (b[0][2] == MAXMOVE)
             return +10;
-        if (b[0][2] == HUMANMOVE)
+        if (b[0][2] == MINMOVE)
             return -10;
     }
     return 0;
@@ -84,9 +84,9 @@ int minimax(char board[SIDE][SIDE], int depth, bool isMax) {
         for (int row = 0; row < SIDE; row++) {
             for (int col = 0; col < SIDE; col++) {
                 if (board[row][col] == EMPTY) {
-                    board[row][col] = COMPUTERMOVE;
+                    board[row][col] = MAXMOVE;
 
-                    bestScore = std::max(bestScore, minimax(board, depth + 1, isMax));
+                    bestScore = std::max(bestScore, minimax(board, depth + 1, !isMax));
 
                     board[row][col] = EMPTY;
                 }
@@ -101,7 +101,7 @@ int minimax(char board[SIDE][SIDE], int depth, bool isMax) {
         for (int row = 0; row < SIDE; row++) {
             for (int col = 0; col < SIDE; col++) {
                 if (board[row][col] == EMPTY) {
-                    board[row][col] = HUMANMOVE;
+                    board[row][col] = MINMOVE;
 
                     bestScore = std::min(bestScore, minimax(board, depth + 1, !isMax));
 
@@ -115,7 +115,13 @@ int minimax(char board[SIDE][SIDE], int depth, bool isMax) {
 }
 
 Move findBestMove(char board[SIDE][SIDE]) {
-    int bestVal = -1000;
+    int bestVal = 1000;
+    bool isMax = true;
+    if (COMPUTERMOVE == MAXMOVE) {
+        bestVal = -1000;
+        isMax = false;
+    }
+
     Move bestMove;
     bestMove.row = -1;
     bestMove.col = -1;
@@ -125,15 +131,23 @@ Move findBestMove(char board[SIDE][SIDE]) {
             if (board[row][col] == EMPTY) {
                 board[row][col] = COMPUTERMOVE;
 
-                int moveVal = minimax(board, 0, false);
+                int moveVal = minimax(board, 0, isMax);
 
                 board[row][col] = EMPTY;
                 
-
-                if (moveVal > bestVal) {
-                    bestMove.row = row;
-                    bestMove.col = col;
-                    bestVal = moveVal;
+                if (COMPUTERMOVE == MAXMOVE) {
+                    if (moveVal > bestVal) {
+                        bestMove.row = row;
+                        bestMove.col = col;
+                        bestVal = moveVal;
+                    }
+                }
+                else {
+                    if (moveVal < bestVal) {
+                        bestMove.row = row;
+                        bestMove.col = col;
+                        bestVal = moveVal;
+                    }
                 }
             }
         }
@@ -197,29 +211,45 @@ int main() {
     { '_', '_', '_' }
     };
 
+    srand(time(0));
     int done;
+    int firstTurn = rand() % 2 + 1;
+    turn = firstTurn;
+
+    if (firstTurn == COMPUTER) {
+        COMPUTERMOVE = MAXMOVE;
+        HUMANMOVE = MINMOVE;
+    }
+    else {
+        COMPUTERMOVE = MINMOVE;
+        HUMANMOVE = MAXMOVE;
+    }
+
 
     printf("Human vs. Tic Tac Toe minimax\n");
-    printf("You will be player against the computer as 'O'\n");
+    printf("You will be playing against the computer as '%c'\n", HUMANMOVE);
+    printf("The computer will be playing as '%c'\n", COMPUTERMOVE);
     printf("Controls are: \n 1 - 2 - 3 \n 4 - 5 - 6 \n 7 - 8 - 9 \n");
+    if(HUMANMOVE == MAXMOVE) drawBoard(board);
 
     done = 0;
 
-    drawBoard(board);
     std::cout << std::endl;
 
     do {
 
         if (turn == HUMAN)
             getHumanMove(board);
-        else
+        else {
             findBestMove(board);
+            drawBoard(board);
+        }
 
         done = evaluate(board);
-        drawBoard(board);
 
         if (bMovesLeft(board) == false) {
-            printf("\n draw \n");
+            drawBoard(board);
+            printf("\n Draw! \n");
             break;
         }
 
@@ -227,10 +257,11 @@ int main() {
 
     } while (done == 0);
 
+    drawBoard(board);
     if (done == 10)
-        printf("\nComputer won!\n");
+        printf("\%c won!\n", MAXMOVE);
     else if (done == -10)
-        printf("\You won!\n");
+        printf("\%c won!\n", MINMOVE);
 
     return 0;
 }
